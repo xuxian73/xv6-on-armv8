@@ -7,6 +7,7 @@ OBJS = \
 	$K/main.o\
 	$K/trap_asm.o\
 	$K/string.o\
+	$K/trap.o\
 
 QEMU = qemu-system-arm
 CROSSCOMPILE = aarch64-none-elf-

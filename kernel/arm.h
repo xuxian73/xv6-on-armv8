@@ -27,6 +27,12 @@ w_TTBR1_EL1(uint64 x)
     asm("msr TTBR1_EL1, %0": : "r"(x) :);
 }
 
+// close local interrupt
+static inline void
+cli()
+{
+    asm("msr DAIFSET, #2": : :);
+}
 typedef uint64 pte_t;
 typedef uint64 pde_t;
 typedef uint64 *pagetable_t;

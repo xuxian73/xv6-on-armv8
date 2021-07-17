@@ -1,9 +1,16 @@
+struct spinlock;
 
+//kalloc.c
+void            freerange(void*, void*);
+void            kfree(void*);
 //main.c
 void            kmain();
 
+//spinlock.c
+void            initlock(struct spinlock*, char* );
 //start.c
 void            _puts(char*);
+void            _puts_int(uint num);
 //string.c
 int             memcmp(const void*, const void*, uint);
 void*           memmove(void*, const void*, uint);
