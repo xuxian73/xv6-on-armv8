@@ -42,7 +42,7 @@
 // RAM start form 1GiB
 #define PHYSTART 0x40000000
 // 128MB RAM
-#define PHYSTOP  (0x08000000 + PHTSTART)
+#define PHYSTOP  (0x08000000 + PHYSTART)
 
 // Device Base
 #define GICBASE     0x08000000  //GIC distributor (interrupt controller)

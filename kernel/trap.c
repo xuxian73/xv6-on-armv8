@@ -1,6 +1,8 @@
+#include "types.h"
+#include "spinlock.h"
 #include "proc.h"
-#include "defs.h"
 #include "arm.h"
+#include "defs.h"
 void 
 bad_handler(uint64 type)
 {

@@ -69,17 +69,34 @@ Some registers have special significance in the PCS:
 
 ### progress
 
-* trap_asm.S: 建立异常向量表，base align 11 entry align 7
+* trap_asm.S: 建立异常向量表，base align 11 entry align 7。trapfram保存通用寄存器以及sp/elr_el1/spsr_el1/lr，sp根据current level还是lower level分成两种情况。因此有两个entry。有进行实现的有current_sp_elx_irq/current_sp_elx_sync(da和ia用于debug)、lower_irq/lower_sync(da/ia/swi用于syscall)
+* trap.c： 异常向量表会跳转到这个文件中的函数。da/ia用于debug，irq之后会交给picirq，swi即software interrupt用于syscall。为实现的interrupt会跳到bad_handler
+
+### plan
+
+由于异常处理暂时没法往下写，先开始内存管理部分。
+
+* 首先要完成kalloc.c用于分配物理内存
+* 接着完成vm.c，实现用户态（EL0）和内核态（EL1）的地址映射函数
 
 
 
 ![img](https://documentation-service.arm.com/static/6014451a4ccc190e5e681290?token=)
 
+# 7.18-7.19
 
+### progress
+
+* spinlock: 实现spinlock，一直循环直到获得锁
+* kalloc:简单的内存分配器kmem内有一个freelist，通过run实现，类似Linux list
+* vm.c: mappages/walk/walkaddr/page_init
+* main.c: 内存管理的初始化仍有bug。首先是把end到INIT_KERNTOP的内存交给kmem，因为这一块在start时已经装进了页表，所以可以拿来预留给kernel_pgtbl，之后page_init利用这一块区域建立页表，映射INIT_KERNTOP到PHYSTOP。kinit再利用这个映射，把剩下的页交给kmem管理（仍有bug）。之后printfinit。
 
 ## Git Node
 
 7.14-7.16: boot 初步完成，提交一个commit “boot”到master
+
+7.17： 提交commit “exception vector”
 
 ## Reference
 

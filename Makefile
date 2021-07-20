@@ -2,13 +2,18 @@ K=kernel
 U=user
 
 OBJS = \
-	$K/entry.o\
 	$K/start.o\
+	$K/kalloc.o\
 	$K/main.o\
-	$K/trap_asm.o\
+	$K/printf.o\
+	$K/proc.o\
 	$K/string.o\
+	$K/spinlock.o\
+	$K/trap_asm.o\
 	$K/trap.o\
-
+	$K/vm.o\
+	$K/entry.o\
+	
 QEMU = qemu-system-arm
 CROSSCOMPILE = aarch64-none-elf-
 

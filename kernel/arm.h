@@ -1,6 +1,6 @@
 #include "../device/arm_virt.h"
-#include "types.h"
 
+#define DAIF_I (1 << 7)
 static inline uint64
 r_CurrentEL()
 {
@@ -33,6 +33,10 @@ cli()
 {
     asm("msr DAIFSET, #2": : :);
 }
-typedef uint64 pte_t;
-typedef uint64 pde_t;
-typedef uint64 *pagetable_t;
+
+// open local interrupt
+static inline void
+sti()
+{
+    asm("msr DAIFCLR, #2": : :);
+}

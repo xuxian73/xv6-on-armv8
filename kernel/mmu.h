@@ -1,13 +1,12 @@
-#include "types.h"
 // Definition for ARM mmu
 #ifndef MMU_ARM
 #define MMU_ARM
 
 // pte[1:0] indicate valid/fault/type of the entry
 #define ENTRY_VALID 0x01
-#define ENTRY_BLOCK 0x01
-#define ENTRY_PAGE  0x01
-#define ENTRY_TABLE 0x03
+#define ENTRY_BLOCK 0x00
+#define ENTRY_PAGE  0x02
+#define ENTRY_TABLE 0x02
 #define ENTRY_MASK  0x03
 #define ENTRY_FAULT 0x00
 
@@ -68,6 +67,5 @@
 #define PGROUNDUP(sz)  (((sz)+PGSIZE-1) & ~(PGSIZE-1))
 #define PGROUNDDOWN(a) (((a)) & ~(PGSIZE-1))
 
-typedef uint64 pte_t;
-typedef uint64* pagetable_t; // 512 PTEs
+
 #endif
