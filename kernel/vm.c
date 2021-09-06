@@ -65,7 +65,7 @@ int mappages(pagetable_t pagetable, uint64 va, uint64 size, uint64 pa, int AP)
     uint64 a, last;
     pte_t *pte;
     a = PGROUNDDOWN(va);
-    last = PGROUNDUP(va + size - 1);
+    last = PGROUNDDOWN(va + size - 1);
     for (;;)
     {
         if ((pte = walk(pagetable, a, 1)) == 0)
@@ -84,8 +84,7 @@ int mappages(pagetable_t pagetable, uint64 va, uint64 size, uint64 pa, int AP)
 void page_init(void)
 {
     mappages(&_kernel_pgtbl, P2V(INIT_KERNTOP), PHYSTOP - INIT_KERNTOP, INIT_KERNTOP, AP_1);
-    asm("tlbi vmalle1" ::
-            :);
+    asm("tlbi vmalle1" :::);
     //vnalle1is?
 }
 
@@ -268,6 +267,24 @@ void uvmclear(pagetable_t pagetable, uint64 va)
     *pte &= ~(0x03 << 6);
 }
 
+// Switch to TTBR0
+void 
+uvmswitch(struct proc* p)
+{
+    uint64 x;
+    push_off();
+    if(p->pagetable == 0) {
+        panic("uvmswitch: no pagetable");
+    }
+    x = (uint64)V2P(p->pagetable);
+    asm("MSR TTBR0_EL1, %0" : : "r"(x) :);
+    asm ("tlbi vmalle1" : : :);
+    pop_off();
+}
+
+// Copy from kernel to user.
+// Copy len bytes from src to virtual address dstva in a given page table.
+// Return 0 on success, -1 on error.
 int copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
 {
     uint64 n, va0, pa0;

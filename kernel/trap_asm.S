@@ -4,7 +4,7 @@
     el0 to el1. lower save SP_EL0, current save sp.
 */
 
-#define verror(type) .align 7; mov x0, #(type); bl bad_handler; b .;
+#define verror(type) .align 7;  mov x0, #(type); bl bad_handler; b .;
 
 .global trapret
 .macro current_entry

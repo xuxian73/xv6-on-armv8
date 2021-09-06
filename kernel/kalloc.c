@@ -68,6 +68,6 @@ kalloc(void)
     release(&kmem.lock);
     
     if(r)
-        memset((char*)r, 5, PGSIZE);
+        memset((char*)r, 0, PGSIZE);
     return (void*)r; 
 }

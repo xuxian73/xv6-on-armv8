@@ -25,12 +25,12 @@ struct context{
     uint64 x27;
     uint64 x28;
     uint64 x29;
-    uint64 elr;
+    uint64 lr;
 };
 
 struct cpu {
     struct proc* proc;          // The process running on this cpu, or null
-    struct context context;     // swtch() here to enter scheduler()
+    struct context* context;     // swtch() here to enter scheduler()
     int noff;                   // Depth of push_off()
     int intena;                 // Were interrupts enabled before push_off()?
 };
@@ -94,6 +94,8 @@ struct proc {
     uint64 sz;                  // Size of process memeory
     pagetable_t pagetable;      // User page table
     struct trapframe* trapframe;// data page for trampoline
-    struct context context;     // swtch() here to run process
+    struct context* context;    // swtch() here to run process
+    struct file *ofile[NOFILE]; // Open files
+    struct inode *cwd;          // Current directory
     char name[16];              // Process name (debugging)
 };

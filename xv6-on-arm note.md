@@ -83,7 +83,7 @@ Some registers have special significance in the PCS:
 
 ![img](https://documentation-service.arm.com/static/6014451a4ccc190e5e681290?token=)
 
-# 7.18-7.19
+## 7.18-7.19
 
 ### progress
 
@@ -92,11 +92,61 @@ Some registers have special significance in the PCS:
 * vm.c: mappages/walk/walkaddr/page_init
 * main.c: 内存管理的初始化仍有bug。首先是把end到INIT_KERNTOP的内存交给kmem，因为这一块在start时已经装进了页表，所以可以拿来预留给kernel_pgtbl，之后page_init利用这一块区域建立页表，映射INIT_KERNTOP到PHYSTOP。kinit再利用这个映射，把剩下的页交给kmem管理（仍有bug）。之后printfinit。
 
+## 7.20-7.22
+
+### progress
+
+主要在进程与调度上
+
+* main.c：首先调用procinit，初始化nextpid锁，初始化线程池每个线程的锁，为每个线程分配一个kernel stack。之后调用userinit初始化第一个线程initcode的context。
+* initcode.S：x0放SYS_exec，x1放init，x2放argv，只后用svc调用exec syscall
+* proc.c：userinit函数首先调用allocproc，从线程池获得一个UNUSED的线程，为其分配pid，然后在其kstack中由上至下分配trapframe，trapret地址，kstack顶，context，然后为proc分配一个页表页。从allocproc出来后，将initcode对应的页载入页表，设置p->trapfram的lr为0，elr为0，设置为RUNNABLE。
+* scheduler()：scheduler发现第一个RUNNABLE的线程也就是initcode后，载入其页表基地址，调用swtch函数，swtch函数将当前CPU（内核态）的context压入栈中，然后将栈地址存到cpu->context中，然后将sp指向proc的context，将proc的context从栈中取出，（同时也完成了kernel stack的切换）。因为lr已经设置为forkret+8，所以br x30跳转到forkret+8。在ARMv8中栈帧的结构如下。因此，编译结果在forkret开始会将x29(fp),x30(lr)压入栈，最后会将x29,x30取出。而我们的做法是跳过压入栈的指令然后在kstack中存入想要的x29与x30（trapret)之后ret就会到达trapret，trapret将栈中的trapframe取出，包括通用寄存器，以及spsr_el1, elr_el1, sp_el0,之后eret就会跳到elr_el1的位置，sp跳到sp_el0并在用户态运行。
+
+![image-20210723111640839](/Users/xuxian/Library/Application Support/typora-user-images/image-20210723111640839.png)
+
+## 7.23
+
+### progress
+
+proc.c: 
+
+1. fork函数首先调用allocproc，然后uvmcopy父亲的pagetable， sz，trapframe并把trapframe中的x0设置为0 使得child的返回值为0，父亲返回pid
+
+2. exit函数首先关闭所有开启的文件，然后唤醒initproc，在设置zombie之前wakeup initproc是安全的，因为即使initporc要查看当前process也会因为锁的缘故无法查看其是zombie的。
+
+   ![image-20210727204934335](/Users/xuxian/Library/Application Support/typora-user-images/image-20210727204934335.png)
+
+3. kill函数只将要kill的对象的kill设置为1，当改process进入或离开kernel时，会检查kill值，若为1就会exit
+
+4. wakeup1唤醒线程p如果他sleeping在wait()中
+
+
+
+## 8.8
+
+### progress
+
+file system(from bottom to up)
+
+1. memide.c: 将blocks存在在内存之中，disksize:block的数量，memdisk为fs的开始iderw若write=1，则将memdisk+blockno*BSIZE的一块读到buf中。
+2. bio.c: buffer cache层。是一个buf结构体的链表，bget得到一个locked的buffer。bread、bwrite检查若为valid则可以直接用，否则要从memide中读。一个线程使用完buf后要调用brelse，brelse检查是否refcnt变为0，若变为0就把它放在链表首，用于LRU，bpin()bunpin()增、减refcnt
+3. log.c：一个log transaction可以包括多个FS system call，commit只在没有fs systemcall时执行，所以不用担心commit时有FS syscall。logheader包括log的数量以及每个log block的blockno。initlog进行初始化并从log 进行recover。begin_op()与end_op()用来决定当前FS syscall能否直接进行（考虑到log在commit，log block是否充足）,end_op()若发现没有syscall在运行，就进行commit。commit()函数首先把cache中修改的块写到log中，在修改logheader，然后将其写到disk中，最后修改log header，把log数改为0，再写log header。这样若中途断电就可以根据log的信息进行恢复。log_write找到与buf的blockno对应的log block，如果没找到，就分配一个log block。
+4. fs.c：为高级的syscall提供manipulation routine。fsinit(dev)从dev读出superblock，bzero将一个block清零，balloc分配一个block
+
+
+
+### Timer
+
+CNTPCT_EL0: report current system count
+
 ## Git Node
 
 7.14-7.16: boot 初步完成，提交一个commit “boot”到master
 
 7.17： 提交commit “exception vector”
+
+7.20:提交一个commit"memory manage"
 
 ## Reference
 
@@ -104,3 +154,4 @@ Some registers have special significance in the PCS:
 2. ARM registerhttps://developer.arm.com/documentation/ddi0595/2021-06/
 3. ARM exception https://developer.arm.com/documentation/102412/0100/Handling-exceptions
 4. arrch64 momory model https://developer.arm.com/documentation/102376/0100/Describing-the-memory-type
+5. UART PL011 https://developer.arm.com/documentation/ddi0183/g/programmers-model/register-descriptions/data-register--uartdr?lang=en

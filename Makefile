@@ -3,14 +3,31 @@ U=user
 
 OBJS = \
 	$K/start.o\
+	$K/bio.o\
+	$K/console.o\
+	$K/debug.o\
+	$K/exec.o\
+	$K/file.o\
+	$K/fs.o\
 	$K/kalloc.o\
+	$K/log.o\
 	$K/main.o\
+	$K/gic.o\
+	$K/pipe.o\
 	$K/printf.o\
 	$K/proc.o\
+	$K/sleeplock.o\
 	$K/string.o\
 	$K/spinlock.o\
+	$K/swtch.o\
+	$K/syscall.o\
+	$K/sysproc.o\
+	$K/sysfile.o\
+	$K/timer.o\
 	$K/trap_asm.o\
 	$K/trap.o\
+	$K/uart.o\
+	$K/virtio_disk.o\
 	$K/vm.o\
 	$K/entry.o\
 	
@@ -49,6 +66,26 @@ OBJCOPY_INIT = $(call quiet-command,$(OBJCOPY) \
 
 build-directory = $(shell mkdir -p build build/device build/lib build/kernel) 
 
+UPROGS=\
+	$U/_init\
+	$U/_sh\
+	
+ULIB = $U/ulib.o $U/usys.o $U/printf.o $U/umalloc.o
+
+_%: %.o $(ULIB)
+	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $^
+	$(OBJDUMP) -S $@ > $*.asm
+	$(OBJDUMP) -t $@ | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $*.sym
+
+$U/usys.o: $U/usys.S
+	$(CC) $(CFLAGS) -c -o $U/usys.o $U/usys.S
+
+mkfs/mkfs: mkfs/mkfs.c $K/fs.h $K/param.h
+	gcc -Werror -Wall  -I. -o mkfs/mkfs mkfs/mkfs.c
+
+fs.img: mkfs/mkfs README $(UPROGS)
+	mkfs/mkfs fs.img README $(UPROGS)
+
 build/%.o: %.c
 	$(call build-directory)
 	$(call quiet-command,$(CC) $(CFLAGS) \
@@ -61,36 +98,30 @@ build/%.o: %.S
 	$(call build-directory)
 	$(call AS_WITH, )
 
-kernel.elf: $(addprefix build/,$(OBJS)) $K/kernel.ld 
+kernel.elf: $(addprefix build/,$(OBJS)) $K/kernel.ld build/initcode fs.img
 	$(call LINK_BIN, $K/kernel.ld, kernel.elf, \
-		$(addprefix build/,$(OBJS)) )
+		$(addprefix build/,$(OBJS)), build/initcode, fs.img )
 	$(OBJDUMP) -S kernel.elf > kernel.asm
 	$(OBJDUMP) -t kernel.elf | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > kernel.sym
-	rm -f initcode fs.img
 
-qemu: kernel.elf
-	@clear
-	@echo "Press Ctrl-A and then X to terminate QEMU session\n"
-	$(QEMU) -M versatilepb -m 128 -cpu arm1176  -nographic -kernel kernel.elf
-
-INITCODE_OBJ = initcode.o
-$(addprefix build/,$(INITCODE_OBJ)): initcode.S
-	$(call build-directory)
+build/initcode.o:	$U/initcode.S
 	$(call AS_WITH, -nostdinc -I.)
 
-#initcode is linked into the kernel, it will be used to craft the first process
-build/initcode: $(addprefix build/,$(INITCODE_OBJ))
+build/initcode: build/initcode.o
 	$(call LINK_INIT, -N -e start -Ttext 0)
 	$(call OBJCOPY_INIT)
 	$(OBJDUMP) -S $< > initcode.asm
 
-build/fs.img:
-	make -C tools
-	make -C usr
+qemu: kernel.elf
+#	@clear
+#	@echo "Press Ctrl-A and then X to terminate QEMU session\n"
+# $(QEMU) -M versatilepb -m 128 -cpu arm1176  -nographic -kernel kernel.elf
 
 clean: 
 	rm -rf build
 	rm -f *.o *.d *.asm *.sym vectors.S bootblock entryother \
-	initcode initcode.out kernel xv6.img fs.img kernel.elf memfs
+	initcode initcode.out kernel xv6.img fs.img kernel.elf memfs \
+	mkfs/mkfs */*.o */*.d \
+	$(UPROGS)\
 	make -C tools clean
 	make -C usr clean

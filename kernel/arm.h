@@ -1,6 +1,14 @@
-#include "../device/arm_virt.h"
+#include "arm_virt.h"
 
 #define DAIF_I (1 << 7)
+static inline uint64
+cpuid()
+{
+    uint64 x;
+    asm("mrs %0, MPIDR_EL1" : "=r"(x) : : );
+    return x & 0x3;
+}
+
 static inline uint64
 r_CurrentEL()
 {

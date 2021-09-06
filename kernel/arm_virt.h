@@ -45,20 +45,20 @@
 #define PHYSTOP  (0x08000000 + PHYSTART)
 
 // Device Base
-#define GICBASE     0x08000000  //GIC distributor (interrupt controller)
-#define UARTBASE    0x09000000  //Universal Asynchronous Receiver/Transmitter
-#define VIRTIOBASE  0x0a000000  //Memory-mapped IO
+#define GICBASE     0x08000000  // GIC distributor (interrupt controller)
+#define UARTBASE    0x09000000  // Universal Asynchronous Receiver/Transmitter
+#define VIRTIOBASE  0x0a000000  // Memory-mapped IO
 #define DEV_SZ      0x01000000
 
-#define UART_CLK    24000000    //UART clk rate
+#define UART_CLK    24000000    // UART clk rate
 
 #define TIMER0          0x1c110000
 #define TIMER1          0x1c120000
 #define CLK_HZ          1000000     // the clock is 1MHZ
 
-#define PIC_TIMER01     13      //Peripheral Component Interconnect
+#define PIC_TIMER01     13      
 #define PIC_TIMER23     11
 #define PIC_UART0       1
-#define PIC_GRAPHIC     19
+#define PIC_VIRTIO      16
 
 #endif

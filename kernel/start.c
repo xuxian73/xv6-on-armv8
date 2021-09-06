@@ -91,7 +91,8 @@ void cpu_setup()
     _puts("CurrentEL: EL");
     _puts_int(x);
     _puts("\n");
-
+    x = cpuid();
+    _puts_int(x);
     //flush instruction cache
     asm("ic iallu": : :);
     //invalidate tlb
@@ -136,9 +137,10 @@ void init_boot_pgtbl()
     bvmmap((uint64)PHYSTART, (uint64)PHYSTART, KERN_SZ, 0);
     bvmmap((uint64)KERNBASE + (uint64)PHYSTART, (uint64)PHYSTART, KERN_SZ, 0);
     bvmmap((uint64)UARTBASE, (uint64)UARTBASE, DEV_SZ, 1);
+    bvmmap((uint64)VIRTIOBASE, (uint64)VIRTIOBASE, DEV_SZ, 1);
     bvmmap((uint64)KERNBASE + (uint64)GICBASE, (uint64)GICBASE, DEV_SZ, 1);
     bvmmap((uint64)KERNBASE + (uint64)UARTBASE, (uint64)UARTBASE, DEV_SZ, 1);
-    bvmmap((uint64)KERNBASE + (uint64)VIRTIOBASE, (uint64)UARTBASE, DEV_SZ, 1);
+    bvmmap((uint64)KERNBASE + (uint64)VIRTIOBASE, (uint64)VIRTIOBASE, DEV_SZ, 1);
     
     cpu_setup();
 
