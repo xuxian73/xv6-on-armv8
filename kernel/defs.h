@@ -9,7 +9,7 @@ struct stat;
 struct superblock;
 struct pipe;
 
-typedef void (*ISR) (struct trapframe *tf, int n);
+typedef void (*ISR) ();
 #define NELEM(x) (sizeof(x) / sizeof((x)[0]))
 
 //bio.c

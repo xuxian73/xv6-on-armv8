@@ -35,6 +35,9 @@ readsb(int dev, struct superblock *sb)
     bp = bread(dev, 1);
     memmove(sb, bp->data, sizeof(*sb));
     brelse(bp);
+
+    bp = bread(dev, 2);
+    brelse(bp);
 }
 
 // Init fs
@@ -450,7 +453,7 @@ stati(struct inode*ip, struct stat*st)
 // Read data from inode.
 // Caller must hold ip->lock.
 // If user_dst == 1, then dst is a user virtual addrss;
-// otherwise dst is a kernel address
+// otherwise dst is a kernel virtual address
 int
 readi(struct inode *ip, int user_dst, uint64 dst, uint off, uint n)
 {

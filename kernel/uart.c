@@ -4,10 +4,11 @@
 #include "param.h"
 #include "arm.h"
 #include "memlayout.h"
+#include "spinlock.h"
 
 static volatile uint *uart_base;
-extern int panicked;
-void isr_uart (struct trapframe *tf, int idx);
+extern volatile int panicked;
+void isr_uart ();
 
 /*  if the FIFOs are enabled, data written to this 
     location is pushed onto the transmit FIFO
@@ -35,6 +36,15 @@ void isr_uart (struct trapframe *tf, int idx);
 #define UART_TXI	(1 << 5)	// transmit interrupt
 #define UART_BITRATE 19200
 
+// the transmit output buffer
+struct spinlock uart_tx_lock;
+#define UART_TX_BUF_SIZE 32
+char uart_tx_buf[UART_TX_BUF_SIZE];
+int uart_tx_w;  // write next to uart_tx_buf[uart_tx_w++]
+int uart_tx_r;  // read next from uart_tx_buf[uart_tx_r++]
+
+void uartstart();
+
 // enable uart
 void uart_init (void *addr)
 {
@@ -53,6 +63,8 @@ void uart_init (void *addr)
 
     // enable FIFO
     uart_base[UART_LCR] |= UARTLCR_FEN;
+
+    initlock(&uart_tx_lock, "uart");
 }
 
 // enable the receive (interrupt) for uart (after GIC has initialized)
@@ -64,12 +76,32 @@ void uart_enable_rx ()
 
 void uartputc (int c)
 {
-    // wait a short period if the transmit FIFO is full
-    while (uart_base[UART_FR] & UARTFR_TXFF) {
-        micro_delay(10);
-    }
+    acquire(&uart_tx_lock);
 
-    uart_base[UART_DR] = c;
+    if (panicked) {
+        for (;;)
+        ;
+    }
+    
+    while(1) {
+        if((uart_tx_w + 1) % UART_TX_BUF_SIZE == uart_tx_r) {
+            // buffer is full
+            // wait for uartstart() to open up space in the buffer
+            sleep(&uart_tx_r, &uart_tx_lock);
+        } else {
+            uart_tx_buf[uart_tx_w] = c;
+            uart_tx_w = (uart_tx_w + 1) % UART_TX_BUF_SIZE;
+            uartstart();
+            release(&uart_tx_lock);
+            return;
+        }
+    }
+    // wait a short period if the transmit FIFO is full
+    // while (uart_base[UART_FR] & UARTFR_TXFF) {
+    //     micro_delay(10);
+    // }
+
+    // uart_base[UART_DR] = c;
 }
 
 void uartputc_sync(int c)
@@ -88,6 +120,35 @@ void uartputc_sync(int c)
     pop_off();
 }
 
+// if the UART is idle and a character is waiting
+// in the transmit buffer, send it
+// caller must hold uart_tx_lock
+// called form both the top- and bottom-half
+void
+uartstart()
+{
+    while(1) {
+        if(uart_tx_w == uart_tx_r) {
+            // empty
+            return;
+        }
+
+        if (uart_base[UART_FR] & UARTFR_TXFF) {
+            // the UART transmit holding register is full,
+            // so we cannot give it another byte.
+            // it will interrupt when it's ready for a new byte.
+            return;
+        }
+
+        int c = uart_tx_buf[uart_tx_r];
+        uart_tx_r = (uart_tx_r + 1) % UART_TX_BUF_SIZE;
+
+        wakeup(&uart_tx_r);
+
+        uart_base[UART_DR] = c;
+    }
+}
+
 //poll the UART for data
 int uartgetc (void)
 {
@@ -98,7 +159,7 @@ int uartgetc (void)
     return uart_base[UART_DR];
 }
 
-void isr_uart (struct trapframe *tf, int idx)
+void isr_uart ()
 {
     if (uart_base[UART_MIS] & UART_RXI) {
         while(1){
@@ -108,6 +169,11 @@ void isr_uart (struct trapframe *tf, int idx)
             consoleintr(c);
         }
     }
+
+    // send buffered characters.
+    acquire(&uart_tx_lock);
+    uartstart();
+    release(&uart_tx_lock);
 
     // clear the interrupt
     uart_base[UART_ICR] = UART_RXI | UART_TXI;

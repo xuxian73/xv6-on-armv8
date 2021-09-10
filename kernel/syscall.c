@@ -41,7 +41,7 @@ argraw(int n)
     case 1:
         return p->trapframe->x1;
     case 2:
-        return p->trapframe->x3;
+        return p->trapframe->x2;
     case 3:
         return p->trapframe->x3;
     case 4:

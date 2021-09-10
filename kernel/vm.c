@@ -110,7 +110,7 @@ void uvmunmap(pagetable_t pagetable, uint64 va, uint64 npages, int do_free)
         if (do_free)
         {
             uint64 pa = (*pte) & PG_ADDR_MASK;
-            kfree((void *)pa);
+            kfree((void*)P2V(pa));
         }
         *pte = 0;
     }
@@ -193,13 +193,13 @@ void freewalk(pagetable_t pagetable)
         pte_t pgd = pagetable[i];
         if ((pgd & ENTRY_VALID) && (pgd & ENTRY_TABLE))
         {
-            pmdtb = (pagetable_t)(pgd & PG_ADDR_MASK);
+            pmdtb = (pagetable_t)P2V(pgd & PG_ADDR_MASK);
             for (j = 0; j < 512; ++j)
             {
                 pte_t pmd = pmdtb[j];
                 if ((pmd & ENTRY_VALID) && (pmd & ENTRY_TABLE))
                 {
-                    ptetb = (pagetable_t)(pmd & PG_ADDR_MASK);
+                    ptetb = (pagetable_t)P2V(pmd & PG_ADDR_MASK);
                     for (k = 0; k < 512; ++k)
                     {
                         pte_t pte = ptetb[k];
@@ -298,10 +298,10 @@ int copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
         if (n > len)
             n = len;
         memmove((void *)P2V(pa0 + (dstva - va0)), src, n);
+        len -= n;
+        src += n;
+        dstva = va0 + PGSIZE;
     }
-    len -= n;
-    src += n;
-    dstva = va0 + PGSIZE;
     return 0;
 }
 

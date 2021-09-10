@@ -67,8 +67,22 @@ OBJCOPY_INIT = $(call quiet-command,$(OBJCOPY) \
 build-directory = $(shell mkdir -p build build/device build/lib build/kernel) 
 
 UPROGS=\
+	$U/_cat\
+	$U/_echo\
+	$U/_forktest\
+	$U/_grep\
 	$U/_init\
+	$U/_kill\
+	$U/_ln\
+	$U/_ls\
+	$U/_mkdir\
+	$U/_rm\
 	$U/_sh\
+	$U/_stressfs\
+	$U/_usertests\
+	$U/_grind\
+	$U/_wc\
+	$U/_zombie\
 	
 ULIB = $U/ulib.o $U/usys.o $U/printf.o $U/umalloc.o
 
@@ -123,5 +137,3 @@ clean:
 	initcode initcode.out kernel xv6.img fs.img kernel.elf memfs \
 	mkfs/mkfs */*.o */*.d \
 	$(UPROGS)\
-	make -C tools clean
-	make -C usr clean

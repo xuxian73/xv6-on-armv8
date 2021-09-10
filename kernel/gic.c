@@ -80,9 +80,9 @@ static void gic_dist_config(uint64 num, int edge)
     *GICD_reg(GICD_ITARGETSRn + (num / 4) * 4) = val;
 }
 
-static void default_isr (struct trapframe *tf, int n)
+static void default_isr ()
 {
-    printf("unhandled interrupt: %d\n", n);
+    printf("unhandled interrupt\n");
 }
 
 void gic_init(){
@@ -113,8 +113,8 @@ gic_handler(void)
     int irq;
     irq = *GICC_reg(GICC_IAR);
     if(irq == 1023)
-        default_isr(0, 1023);
-    isrs[irq](0, irq - 32);
+        default_isr();
+    isrs[irq-32]();
     *(uint*)GICC_reg(GICC_EOIR) = irq;
     return irq;
 }

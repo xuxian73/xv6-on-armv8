@@ -34,6 +34,5 @@ kmain()
 
     userinit();
     __sync_synchronize();
-
     scheduler();
 }

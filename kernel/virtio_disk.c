@@ -122,7 +122,7 @@ void virtio_disk_init(void)
         panic("virtio disk max queue too short");
     *R(VIRTIO_MMIO_QUEUE_NUM) = NUM;
     memset(disk.pages, 0, sizeof(disk.pages));
-    *R(VIRTIO_MMIO_QUEUE_PFN) = ((uint64)disk.pages) >> PGSHIFT;
+    *R(VIRTIO_MMIO_QUEUE_PFN) = (V2P((uint64)disk.pages)) >> PGSHIFT;
 
     // desc = pages -- num * virtq_desc
     // avail = pages + 0x40 -- 2 * uint16, then num * uint16
@@ -232,12 +232,12 @@ virtio_disk_rw(struct buf *b, int write)
     buf0->reserved = 0;
     buf0->sector = sector;
 
-    disk.desc[idx[0]].addr = (uint64)buf0;
+    disk.desc[idx[0]].addr = V2P((uint64)buf0);
     disk.desc[idx[0]].len = sizeof(struct virtio_blk_req);
     disk.desc[idx[0]].flags = VRING_DESC_F_NEXT;
     disk.desc[idx[0]].next = idx[1];
 
-    disk.desc[idx[1]].addr = (uint64)b->data;
+    disk.desc[idx[1]].addr = V2P((uint64)b->data);
     disk.desc[idx[1]].len = BSIZE;
     disk.desc[idx[1]].flags = VRING_DESC_F_NEXT;
     if(!write)
@@ -245,7 +245,7 @@ virtio_disk_rw(struct buf *b, int write)
     disk.desc[idx[1]].next = idx[2];
 
     disk.info[idx[0]].status = 0xff; // if OK, device write 0; IOERR 1; UNSUPP 2
-    disk.desc[idx[2]].addr = (uint64)&disk.info[idx[0]].status;
+    disk.desc[idx[2]].addr = V2P((uint64)&disk.info[idx[0]].status);
     disk.desc[idx[2]].len = 1;
     disk.desc[idx[2]].flags = VRING_DESC_F_WRITE;   // device write the status
     disk.desc[idx[2]].next = 0;

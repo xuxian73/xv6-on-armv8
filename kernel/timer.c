@@ -23,7 +23,7 @@
 #define TIMER_PERIODIC 0x40	// enable periodic mode
 #define TIMER_EN       0x80	// enable the timer
 
-void isr_timer (struct trapframe *tp, int irq_idx);
+void isr_timer ();
 
 struct spinlock tickslock;
 uint ticks;
@@ -49,7 +49,7 @@ void timer_init(int hz)
 }
 
 // interrupt service routine for the timer
-void isr_timer (struct trapframe *tp, int irq_idx)
+void isr_timer ()
 {
     acquire(&tickslock);
     ticks++;

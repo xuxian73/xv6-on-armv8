@@ -2,14 +2,14 @@
 
 .global start
 start:
-    ldr     x1, =init
-    ldr     x2, argv
-    mov     x0, #SYS_exec
+    ldr     x0, =init
+    ldr     x1, =argv
+    mov     x7, #SYS_exec
     svc     0x00
 
 # for(;;) exit();
 exit:
-    mov     x0, #SYS_exit
+    mov     x7, #SYS_exit
     svc     0x00
     b       exit
 

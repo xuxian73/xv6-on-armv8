@@ -7,8 +7,8 @@ struct elfhdr {
     uint magic; // must equal ELF_MAGIC
     uchar elf[12];
     ushort type;
-    uint version;
     ushort machine;
+    uint version;
     uint64 entry;
     uint64 phoff;
     uint64 shoff;
