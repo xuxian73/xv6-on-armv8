@@ -132,10 +132,7 @@ void syscall(void)
     if ((num > 0) && (num <= NELEM(syscalls)) && syscalls[num])
     {
         ret = syscalls[num]();
-        if (num != SYS_exec)
-        {
-            p->trapframe->x0 = ret;
-        }
+        p->trapframe->x0 = ret;
     }
     else
     {
