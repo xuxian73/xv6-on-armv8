@@ -28,7 +28,7 @@ acquire(struct spinlock* lk)
 
     __sync_synchronize();
 
-    lk->cpu = cpu;
+    lk->cpu = mycpu();
 }
 
 //Release the lock.
@@ -52,20 +52,21 @@ push_off(void)
     int old = intr_get();
 
     cli();
-    if (cpu->noff == 0)
-        cpu->intena = old;
-    cpu->noff += 1;
+    if (mycpu()->noff == 0)
+        mycpu()->intena = old;
+    mycpu()->noff += 1;
 }
 
 void 
 pop_off(void)
 {
+    struct cpu *c = mycpu();
     if(intr_get())
         panic("pop_off - interruptible");
-    if(cpu->noff < 1)
+    if(c->noff < 1)
         panic("pop_off");
-    cpu->noff -= 1;
-    if((cpu->noff == 0) && cpu->intena)
+    c->noff -= 1;
+    if((c->noff == 0) && c->intena)
         sti();
 }
 
@@ -75,7 +76,7 @@ int
 holding(struct spinlock *lk)
 {
   int r;
-  r = (lk->locked && lk->cpu == cpu);
+  r = (lk->locked && lk->cpu == mycpu());
   return r;
 }
 

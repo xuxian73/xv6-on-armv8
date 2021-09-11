@@ -56,7 +56,7 @@ static void gic_dist_switch(uint64 num, int enable)
     *GICD_reg(GICD_ISENABLERn + (num / 32) * 4) = val;
 }
 
-static void gic_dist_config(uint64 num, int edge)
+static void gic_dist_config(uint64 num, int edge, int target)
 {
     uint val, bitoff;
     /* configure */
@@ -76,7 +76,7 @@ static void gic_dist_config(uint64 num, int edge)
     /* target CPU */
     bitoff = (num % 4) * 8;
     val = *GICD_reg(GICD_ITARGETSRn + (num / 4)* 4);
-    val |= 0x1 << bitoff;
+    val |= target << bitoff;
     *GICD_reg(GICD_ITARGETSRn + (num / 4) * 4) = val;
 }
 
@@ -85,14 +85,20 @@ static void default_isr ()
     printf("unhandled interrupt\n");
 }
 
+void gichartinit(int hart){
+    *GICC_reg(GICC_PMR) = 0xf;
+    *GICC_reg(GICC_CTLR) |= 1;
+    gic_dist_config(PIC_TIMER, 0, 1 << hart);
+}
+
 void gic_init(){
     int i;
     for(i = 0; i < 32; ++i)
         isrs[i] = default_isr;
     *GICC_reg(GICC_PMR) = 0xf;
-    gic_dist_config(PIC_TIMER, 1);
-    gic_dist_config(PIC_UART0 + 32, 1);
-    gic_dist_config(PIC_VIRTIO + 32, 1);
+    gic_dist_config(PIC_TIMER, 0, 1);
+    gic_dist_config(PIC_UART0 + 32, 0, 0x11);
+    gic_dist_config(PIC_VIRTIO + 32, 1, 0x11);
 
     *GICD_reg(GICD_CTLR) |= 1;
     *GICC_reg(GICC_CTLR) |= 1;

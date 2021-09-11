@@ -86,13 +86,13 @@ void bvmmap(uint64 va, uint64 pa, uint sz, int dev_mem)
 void cpu_setup()
 {
     uint64 x;
-    x = r_CurrentEL() >> 2;
-    x &= 0x3;
-    _puts("CurrentEL: EL");
-    _puts_int(x);
-    _puts("\n");
-    x = cpuid();
-    _puts_int(x);
+    // x = r_CurrentEL() >> 2;
+    // x &= 0x3;
+    // _puts("CurrentEL: EL");
+    // _puts_int(x);
+    // _puts("\n");
+    // x = cpuid();
+    // _puts_int(x);
     //flush instruction cache
     asm("ic iallu": : :);
     //invalidate tlb
@@ -129,7 +129,7 @@ void cpu_setup()
     x = x | 0x01;
     asm("msr SCTLR_EL1, %0": : "r"(x):);
     asm("isb": : :);
-    _puts("System Configure Completed...\n\n");
+    // _puts("System Configure Completed...\n\n");
 }
 
 void init_boot_pgtbl() 
@@ -141,9 +141,6 @@ void init_boot_pgtbl()
     bvmmap((uint64)KERNBASE + (uint64)GICBASE, (uint64)GICBASE, DEV_SZ, 1);
     bvmmap((uint64)KERNBASE + (uint64)UARTBASE, (uint64)UARTBASE, DEV_SZ, 1);
     bvmmap((uint64)KERNBASE + (uint64)VIRTIOBASE, (uint64)VIRTIOBASE, DEV_SZ, 1);
-    
-    cpu_setup();
-
 }
 
 void clear_bss (void)
@@ -151,20 +148,28 @@ void clear_bss (void)
     memset(&edata, 0x00, &end-&edata);
 }
 
+volatile static int set_pgtbl_done = 0;
 void 
 start(void) 
 {
-    _puts("Starting...\n");
+    //_puts("Starting...\n");
+    if (cpuid() == 0) {
+        init_PGD_table();
+        init_boot_pgtbl();
+        set_pgtbl_done = 1;
+        __sync_synchronize();
+    } else {
+        while(set_pgtbl_done == 0)
+            ;
+    }
 
-    init_PGD_table();
-
-    init_boot_pgtbl();
+    cpu_setup();
 
     jump_stack();
 
-    clear_bss();
+    // clear_bss();
 
-    _puts("Starting kernel...\n");
+    //_puts("Starting kernel...\n");
 
     kmain();
 }

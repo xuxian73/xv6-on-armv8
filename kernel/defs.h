@@ -63,6 +63,7 @@ struct inode*   nameiparent(char*, char*);
 void            gic_init();
 void            gic_set(int, ISR);
 int             gic_handler();
+void            gichartinit(int hart);
 
 //kalloc.c
 void            kinit(void);
@@ -83,11 +84,6 @@ void            kmain();
 void            ideinit(void);
 void            ideintr(void);
 void            iderw(struct buf *b, int write);
-
-// picirq.c
-// void            pic_enable(int, ISR);
-// void            pic_init(void*);
-// void            pic_dispatch (struct trapframe *tp);
 
 // pipe.c
 int             pipealloc(struct file **f0, struct file **f1);

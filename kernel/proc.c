@@ -23,7 +23,7 @@ struct cpu *
 mycpu(void)
 {
     int id = cpuid();
-    struct cpu *c = &cpu[id];
+    struct cpu *c = &cpus[id];
     return c;
 }
 
