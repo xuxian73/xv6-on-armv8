@@ -42,7 +42,7 @@
 #define GICD_reg(r)     ((volatile uint*)(KERNBASE + GICBASE + r))
 #define GICC_reg(r)     ((volatile uint*)(KERNBASE + GICBASE + 0x10000 + r))
 
-static ISR isrs[32];
+static ISR isrs[64];
 
 static void gic_dist_switch(uint64 num, int enable)
 {
@@ -90,8 +90,7 @@ void gic_init(){
     for(i = 0; i < 32; ++i)
         isrs[i] = default_isr;
     *GICC_reg(GICC_PMR) = 0xf;
-    gic_dist_config(PIC_TIMER01 + 32, 1);
-    gic_dist_config(PIC_TIMER23 + 32, 1);
+    gic_dist_config(PIC_TIMER, 1);
     gic_dist_config(PIC_UART0 + 32, 1);
     gic_dist_config(PIC_VIRTIO + 32, 1);
 
@@ -101,7 +100,7 @@ void gic_init(){
 
 void gic_set(int n, ISR isr)
 {
-    if (n < 32) {
+    if (n < 64) {
         isrs[n] = isr;
     }
 }
@@ -114,7 +113,7 @@ gic_handler(void)
     irq = *GICC_reg(GICC_IAR);
     if(irq == 1023)
         default_isr();
-    isrs[irq-32]();
+    isrs[irq]();
     *(uint*)GICC_reg(GICC_EOIR) = irq;
     return irq;
 }

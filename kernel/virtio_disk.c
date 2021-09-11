@@ -135,7 +135,7 @@ void virtio_disk_init(void)
     for(i = 0; i < NUM; ++i)
         disk.free[i] = 1;
 
-    gic_set(PIC_VIRTIO, virtio_disk_intr);
+    gic_set(PIC_VIRTIO + 32, virtio_disk_intr);
 }
 
 // find a free descriptor, mark it non-free, return its index

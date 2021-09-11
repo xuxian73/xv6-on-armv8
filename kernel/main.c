@@ -29,7 +29,7 @@ kmain()
     binit();
     iinit();
     virtio_disk_init();
-    //timer_init(HZ);
+    timer_init();
     fileinit();
 
     userinit();

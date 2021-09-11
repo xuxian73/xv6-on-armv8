@@ -11,14 +11,12 @@ uint ticks;
 void 
 bad_handler(uint64 type)
 {
-    cli();
     struct proc* p;
     p = myproc();
     printf("bad_handler: interrupt type ");
     printf("%d", (uint)type);
     printf(" not implemented.\n");
     p->killed = 1;
-    sti();
 }
 
 void 
@@ -27,18 +25,20 @@ irq_handler(struct trapframe* tf, uint64 el, uint64 esr)
     struct proc* p = myproc();
     if(p)
         p->trapframe = tf;
-    gic_handler();
+    int whichdev = gic_handler();
+    if (p && p->killed)
+        exit(-1);
+    if (whichdev == PIC_TIMER && p && p->state == RUNNING)
+        yield();
 }
 
 void
 dabort_handler(struct trapframe tf, uint64 el)
 {
     struct proc *p;
-    cli();
     p = myproc();
     printf("dabort_handler: not implemented.\n");
     p->killed = 1;
-    sti();
 }
 
 void
@@ -48,7 +48,6 @@ iabort_handler(struct trapframe tf, uint64 el)
     p = myproc();
     printf("iabort_handler: not implemented.\n");
     p->killed = 1;
-    sti();
 }
 
 //software interrupt

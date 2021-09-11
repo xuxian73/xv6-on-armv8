@@ -52,12 +52,7 @@
 
 #define UART_CLK    24000000    // UART clk rate
 
-#define TIMER0          0x1c110000
-#define TIMER1          0x1c120000
-#define CLK_HZ          1000000     // the clock is 1MHZ
-
-#define PIC_TIMER01     13      
-#define PIC_TIMER23     11
+#define PIC_TIMER       30   
 #define PIC_UART0       1
 #define PIC_VIRTIO      16
 

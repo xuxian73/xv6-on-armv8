@@ -71,7 +71,7 @@ void uart_init (void *addr)
 void uart_enable_rx ()
 {
     uart_base[UART_IMSC] = UART_RXI;
-    gic_set(PIC_UART0, isr_uart);
+    gic_set(PIC_UART0 + 32, isr_uart);
 }
 
 void uartputc (int c)
@@ -96,12 +96,6 @@ void uartputc (int c)
             return;
         }
     }
-    // wait a short period if the transmit FIFO is full
-    // while (uart_base[UART_FR] & UARTFR_TXFF) {
-    //     micro_delay(10);
-    // }
-
-    // uart_base[UART_DR] = c;
 }
 
 void uartputc_sync(int c)
@@ -111,9 +105,8 @@ void uartputc_sync(int c)
         for(;;)
         ;
     }
-    while (uart_base[UART_FR] & UARTFR_TXFF) {
-        micro_delay(10);
-    }
+    while (uart_base[UART_FR] & UARTFR_TXFF)
+        ;
     
     uart_base[UART_DR] = c;
 

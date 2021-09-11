@@ -120,6 +120,7 @@ void            wakeup(void*);
 int             either_copyout(int user_dst, uint64 dst, void *src, uint64 len);
 int             either_copyin(void *dst, int user_src, uint64 src, uint64 len);
 void            procdump(void);
+void            yield();
 
 //sleeplock.c
 void            initsleeplock(struct sleeplock *, char *);
@@ -166,7 +167,7 @@ void            syscall(void);
 //sysproc.c
 
 //timer.c
-void            timer_init(int);
+void            timer_init();
 
 //trap.c
 extern uint     ticks;
@@ -177,7 +178,6 @@ void            uart_init(void*);
 void            uartputc(int);
 void            uartputc_sync(int);
 int             uartgetc(void);
-void            micro_delay(int us);
 void            uart_enable_rx();
 
 //virtio_disk.c
