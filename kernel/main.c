@@ -42,7 +42,7 @@ kmain()
         printf("hart %d starting\n", cpuid());
         //gichartinit(cpuid());
         timer_init();
-        gichartinit();
+        gichartinit(cpuid());
     }
     scheduler();
 }

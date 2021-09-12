@@ -88,6 +88,7 @@ static void default_isr ()
 void gichartinit(int hart){
     *GICC_reg(GICC_PMR) = 0xf;
     *GICC_reg(GICC_CTLR) |= 1;
+    /* TIMER is private PPI to core */
     gic_dist_config(PIC_TIMER, 0, 1 << hart);
 }
 

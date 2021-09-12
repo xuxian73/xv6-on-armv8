@@ -39,6 +39,7 @@ dabort_handler(struct trapframe tf, uint64 el)
     p = myproc();
     printf("dabort_handler: not implemented.\n");
     p->killed = 1;
+    exit(-1);
 }
 
 void
@@ -48,6 +49,7 @@ iabort_handler(struct trapframe tf, uint64 el)
     p = myproc();
     printf("iabort_handler: not implemented.\n");
     p->killed = 1;
+    exit(-1);
 }
 
 //software interrupt
@@ -57,5 +59,7 @@ swi_handler(struct trapframe* tf, uint64 el, uint64 esr)
 {
     struct proc* p = myproc();
     p->trapframe = tf;
+    if(p->killed)
+        exit(-1);
     syscall();
 }
